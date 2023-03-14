@@ -1,0 +1,2 @@
+responses
+odoo_test_helper

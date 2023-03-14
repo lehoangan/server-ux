@@ -3,7 +3,7 @@
 {
     "name": "Base Binary URL Import",
     "summary": "Wizard to import binary files from URL on existing records",
-    "version": "13.0.1.0.0",
+    "version": "16.0.1.0.0",
     "development_status": "Alpha",
     "category": "Uncategorized",
     "website": "https://github.com/OCA/server-ux",
@@ -12,6 +12,10 @@
     "installable": True,
     "application": False,
     "external_dependencies": {"python": ["rfc6266_parser"]},
-    "depends": ["base_import", "web_domain_field"],
-    "data": ["data/ir_config_parameter.xml", "wizard/base_binary_url_import_view.xml"],
+    "depends": ["base", "base_import", "web_domain_field"],
+    "data": [
+        "security/ir.model.access.csv",
+        "data/ir_config_parameter.xml",
+        "wizard/base_binary_url_import_view.xml",
+    ],
 }

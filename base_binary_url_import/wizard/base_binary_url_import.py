@@ -136,8 +136,15 @@ class BaseBinaryURLImport(models.TransientModel):
                 unexisting_xml_ids.append(xml_id)
             elif xml_id_rec._name != self.target_model_id.model:
                 raise UserError(
-                    _("XML ID %s matches a record of model %s instead of model %s")
-                    % (xml_id, xml_id_rec._name, self.target_model_id._name)
+                    _(
+                        "XML ID %(xml_id)s matches a record of model "
+                        "%(model_name)s instead of model %(tagert_model_name)s"
+                    )
+                    % {
+                        "xml_id": xml_id,
+                        "model_name": xml_id_rec._name,
+                        "tagert_model_name": self.target_model_id._name,
+                    }
                 )
         if unexisting_xml_ids:
             raise UserError(
@@ -256,14 +263,16 @@ class BaseBinaryURLImportLine(models.TransientModel):
             request_session = requests
         binary_content, filename = self._import_content_from_url(request_session)
         target_record = self._get_target_record()
-        target_record.write(
-            {
-                self.wizard_id.target_binary_field_id.name: base64.b64encode(
-                    binary_content
-                ),
-                self.wizard_id.target_binary_filename_field_id.name: filename,
-            }
-        )
+        vals = {
+            self.wizard_id.target_binary_field_id.name: base64.b64encode(binary_content)
+        }
+        if self.wizard_id.target_binary_filename_field_id:
+            vals.update(
+                {
+                    self.wizard_id.target_binary_filename_field_id.name: filename,
+                }
+            )
+        target_record.write(vals)
         return target_record.id
 
     def _import_content_from_url(self, request_session):
@@ -285,6 +294,7 @@ class BaseBinaryURLImportLine(models.TransientModel):
         _logger.debug(
             "Trying to import Binary from URL: %s " % self.binary_url_to_import
         )
+        except_message = ""
         try:
             with request_session.get(
                 self.binary_url_to_import, timeout=timeout, stream=True
@@ -315,9 +325,11 @@ class BaseBinaryURLImportLine(models.TransientModel):
 
         except HTTPError as e:
             _logger.exception(e)
+            except_message = e
+        if except_message:
             raise ValueError(
                 _("Could not retrieve URL: %(url)s : %(error)s")
-                % {"url": self.binary_url_to_import, "error": e}
+                % {"url": self.binary_url_to_import, "error": except_message}
             )
 
         return content, filename
